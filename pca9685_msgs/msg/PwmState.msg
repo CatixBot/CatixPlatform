@@ -1,3 +1,2 @@
-int32 port_num
-int32 on_value
-int32 off_value
+uint8 channel_number
+float32 pulse_width_percentage

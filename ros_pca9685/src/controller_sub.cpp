@@ -1,58 +1,99 @@
 #include "controller_sub.hpp"
 
+#include "PCA9685.h"
 
-Controller::Controller(){
+#include <cmath>
 
-  // Get Min and Max joints limits
-	node.param("joint_lower_limit", joint_lower_limit, -1.570796327);
-	node.param("joint_upper_limit", joint_upper_limit, 1.570796327);
+//---------------------------------------------------------------------------
 
-	controller = new PCA9685(I2C_BUS, I2C_ADDRESS);
- 	controller->setPWMFreq(60);
-	d009a_limit_coef  = (D009A_SERVO_MAX_PUL - D009A_SERVO_MIN_PUL) / (joint_upper_limit - joint_lower_limit);
-	d150a_limit_coef  = (D150A_SERVO_MAX_PUL - D150A_SERVO_MIN_PUL) / (joint_upper_limit - joint_lower_limit);
-	sub_servo = node.subscribe("pca9685/servostate_to_controller", 100, &Controller::chatterServoState, this);
-	ROS_INFO("Servo controller is ready...");
-        sub_pwm = node.subscribe("pca9685/pwmstate_to_controller", 100, &Controller::chatterPwmState, this);
-        ROS_INFO("PWM controller is ready...");
+#define I2C_BUS 1
+#define I2C_ADDRESS 0x40
+#define SERVO_PULSE_RANGE 4096
+#define NUMBER_OF_CHANNELS 16
+
+//---------------------------------------------------------------------------
+
+CatixPlatform::CatixPlatform()
+    : pControllerPWM(std::make_unique<PCA9685>(I2C_BUS, I2C_ADDRESS))
+    , servoParameters(getDefaultParameters())
+{
+    this->pControllerPWM->setPWMFreq(60);
+
+    sub_pwm = node.subscribe("CatixPlatform/pwm", 100, &CatixPlatform::chatterPwmState, this);
+    ROS_INFO("PWM control is ready...");
+
+    sub_servo = node.subscribe("CatixPlatform/servo", 100, &CatixPlatform::chatterServoState, this);
+    ROS_INFO("Servo control is ready...");
+
+    sub_servo = node.subscribe("CatixPlatform/2dofleg", 100, &CatixPlatform::chatterServoState, this);
+    ROS_INFO("2DOF leg control is ready...");
+
+    sub_servo = node.subscribe("CatixPlatform/8dofplatform", 100, &CatixPlatform::chatterServoState, this);
+    ROS_INFO("8DOF platform control is ready...");
 }
 
-void Controller::chatterServoState (const pca9685_msgs::ServoStateConstPtr &servo_state){
-	int target_value;
-        ROS_INFO("CMD Servo %d",  servo_state->port_num);
-	if((servo_state->servo_type ==  servo_state->STOP) && (servo_state->port_num == 0)){
-		for(int i = 1; i < 13; i++){
-	                controller->setPWM(i, 0,  0);
-		}
-                ROS_INFO("All servos disabled");
-	} else {	
-		if(servo_state->servo_type ==  servo_state->D150A) {
-	        	target_value = (D150A_SERVO_MIN_PUL + D150A_SERVO_MAX_PUL)/2 + (int)(servo_state->servo_rot * d150a_limit_coef);
-                	controller->setPWM(servo_state->port_num, 0, (int) target_value);
-		} else if (servo_state->servo_type ==   servo_state->D009A){
-			target_value = (D009A_SERVO_MIN_PUL + D009A_SERVO_MAX_PUL)/2 + (int)(servo_state->servo_rot * d009a_limit_coef);
-                	controller->setPWM(servo_state->port_num, 0, (int) target_value);
-		} else {
-                	target_value =  0;
-                	controller->setPWM(servo_state->port_num, 0,  (int) target_value);
-		}
-       		ROS_INFO("Servo %d: [%d]",  servo_state->port_num, (int) target_value);
-	}
+void CatixPlatform::listenerPwmState(const CatixMessages::PwmStateConstPtr &pPwmState)
+{
+    this->setPulseWidth(pPwmState->channel_number, pPwmState->pulse_width_percentage);
+    ROS_INFO("PWM %d: [%f%%]", pPwmState->channel_number, pPwmState->pulse_width_percentage);
 }
 
-void Controller::chatterPwmState (const pca9685_msgs::PwmStateConstPtr &pwm_state){
-
-        controller->setPWM(pwm_state->port_num, pwm_state->on_value, pwm_state->off_value );
-
-        ROS_INFO("PWM %d: [%d, %d]",  pwm_state->port_num, pwm_state->on_value, pwm_state->off_value);
+void CatixPlatform::listenerServoState(const CatixMessages::ServoStateConstPtr &pServoState)
+{
+    const float pulseWidthPercentage = convertAngleToPulseWidth(pServoState->rotate_angle);
+    this->setPulseWidth(pServoState->channel_number, pulseWidthPercentage);
+    ROS_INFO("Servo %d: [%frad]",  pServoState->channel_number, pServoState->rotate_angle);
 }
 
+void CatixPlatform::listenerLegState(const CatixMessages::2DofLegStateConstPtr &pLegState)
+{
+    // TODO: Calculate angles to rotate links according to the required position
+}
+
+void CatixPlatform::listenerPlatformState(const CatixMessages::8DofPlatformStateConstPtr &pPlatformState)
+{
+    // TODO: Calculate and run trajectory for each leg to move/rotate accordingly
+}
+
+servoparameters_t CatixPlatform::getDefaultParameters()
+{
+    const ServoParameters defaultParameters;
+    defaultParameters.pulseWidthOffset = 0.0;
+    defaultParameters.pulseWidthToAngleSlope = M_PI / 100.0;
+    defaultParameters.pulseWidthMinimum = 0.0;
+    defaultParameters.pulseWidthMaximum = 100.0;
+
+    return {NUMBER_OF_CHANNELS, defaultParameters};
+}
+
+void CatixPlatform::setPulseWidth(uint8_t channelNumber, float pulseWidthPercentage)
+{
+    const float pulseWidth = pulseWidthPercentage * SERVO_PULSE_RANGE / 100;
+    this->pControllerPWM->setPWM(channelNumber, 0, static_cast<int>(pulseWidth));
+}
+
+float CatixPlatform::convertAngleToPulseWidth(float angle, uint8_t channelNumber)
+{
+    const ServoParameters& rServoParameters = this->servoParameters[channelNumber];
+    float pulseWidthPercentage = rServoParameters.pulseWidthToAngleSlope * angle + rServoParameters.pulseWidthOffset;
+    if (pulseWidthPercentage > rServoParameters.pulseWidthMaximum)
+    {
+        ROS_WARN("Servo %d: %frad angle is out of range", channelNumber, angle);
+        pulseWidthPercentage = rServoParameters.pulseWidthMaximum;
+    }
+
+    if (pulseWidthPercentage < rServoParameters.pulseWidthMinimum)
+    {
+        ROS_WARN("Servo %d: %frad angle is out of range", channelNumber, angle);
+        pulseWidthPercentage = rServoParameters.pulseWidthMinimum;
+    }
+
+    return pulseWidthPercentage;
+}
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "controller_sub");
-	Controller c;
+    ros::init(argc, argv, "CatixPlatform");
+    CatixPlatform catixPlatform;
     ros::spin();
 }
-
-

@@ -1,0 +1,2 @@
+float32 move_speed
+float32 rotate_speed
