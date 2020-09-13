@@ -4,7 +4,7 @@
     <version>0.0.1</version>
     <description>Catix platform messages</description>
     <maintainer email="bot.catix@gmail.com">catix</maintainer>
-    <license>BSD</license>
+    <license>MIT</license>
     <url type="UFactory repositories">https://github.com/UFactory</url> 
     <buildtool_depend>catkin</buildtool_depend>
     <build_depend>std_msgs</build_depend>
