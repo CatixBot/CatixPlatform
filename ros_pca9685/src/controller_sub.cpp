@@ -40,19 +40,19 @@ void CatixPlatform::listenerServoState(const catix_messages::ServoStateConstPtr 
 {
     const float pulseWidthPercentage = convertAngleToPulseWidth(pServoState->rotate_angle, pServoState->channel_number);
     this->setPulseWidth(pServoState->channel_number, pulseWidthPercentage);
-    ROS_INFO("Servo %d: [%f rad]",  pServoState->channel_number, pServoState->rotate_angle);
+    ROS_INFO("Servo %d: [%frad]",  pServoState->channel_number, pServoState->rotate_angle);
 }
 
 void CatixPlatform::listenerLegState(const catix_messages::TwoDofLegStateConstPtr &pLegState)
 {
     // TODO: Calculate angles to rotate links according to the required position
-    ROS_INFO("Leg %d: [%f m; %f rad]",  pLegState->leg_number, pLegState->posture_ro, pLegState->posture_phi);
+    ROS_INFO("Leg %d: [%fm; %frad]",  pLegState->leg_number, pLegState->posture_ro, pLegState->posture_phi);
 }
 
 void CatixPlatform::listenerPlatformState(const catix_messages::EightDofPlatformStateConstPtr &pPlatformState)
 {
     // TODO: Calculate and run trajectory for each leg to move/rotate accordingly
-    ROS_INFO("Platform: [%f m/s; %f rad/s]",  pPlatformState->move_speed, pPlatformState->rotate_speed);
+    ROS_INFO("Platform: [%fm/s; %frad/s]",  pPlatformState->move_speed, pPlatformState->rotate_speed);
 }
 
 CatixPlatform::servoparameters_t CatixPlatform::getDefaultParameters()

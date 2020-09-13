@@ -2,7 +2,7 @@
 <package>
     <name>catix_messages</name>
     <version>0.0.1</version>
-    <description>The uarm_msgs package</description>
+    <description>Catix platform messages</description>
     <maintainer email="bot.catix@gmail.com">catix</maintainer>
     <license>BSD</license>
     <url type="UFactory repositories">https://github.com/UFactory</url> 
