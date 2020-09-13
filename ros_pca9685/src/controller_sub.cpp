@@ -1,7 +1,5 @@
 #include "controller_sub.hpp"
 
-#include "PCA9685.h"
-
 #include <cmath>
 
 //---------------------------------------------------------------------------
@@ -19,45 +17,47 @@ CatixPlatform::CatixPlatform()
 {
     this->pControllerPWM->setPWMFreq(60);
 
-    sub_pwm = node.subscribe("CatixPlatform/pwm", 100, &CatixPlatform::chatterPwmState, this);
+    subscriberPWM = node.subscribe("CatixPlatform/pwm", 100, &CatixPlatform::listenerPwmState, this);
     ROS_INFO("PWM control is ready...");
 
-    sub_servo = node.subscribe("CatixPlatform/servo", 100, &CatixPlatform::chatterServoState, this);
+    subscriberServo = node.subscribe("CatixPlatform/servo", 100, &CatixPlatform::listenerServoState, this);
     ROS_INFO("Servo control is ready...");
 
-    sub_servo = node.subscribe("CatixPlatform/2dofleg", 100, &CatixPlatform::chatterServoState, this);
+    subscriberLeg = node.subscribe("CatixPlatform/TwoDofLeg", 100, &CatixPlatform::listenerLegState, this);
     ROS_INFO("2DOF leg control is ready...");
 
-    sub_servo = node.subscribe("CatixPlatform/8dofplatform", 100, &CatixPlatform::chatterServoState, this);
+    subscriberPlatform = node.subscribe("CatixPlatform/EightDofPlatform", 100, &CatixPlatform::listenerPlatformState, this);
     ROS_INFO("8DOF platform control is ready...");
 }
 
-void CatixPlatform::listenerPwmState(const CatixMessages::PwmStateConstPtr &pPwmState)
+void CatixPlatform::listenerPwmState(const catix_messages::PwmStateConstPtr &pPwmState)
 {
     this->setPulseWidth(pPwmState->channel_number, pPwmState->pulse_width_percentage);
     ROS_INFO("PWM %d: [%f%%]", pPwmState->channel_number, pPwmState->pulse_width_percentage);
 }
 
-void CatixPlatform::listenerServoState(const CatixMessages::ServoStateConstPtr &pServoState)
+void CatixPlatform::listenerServoState(const catix_messages::ServoStateConstPtr &pServoState)
 {
-    const float pulseWidthPercentage = convertAngleToPulseWidth(pServoState->rotate_angle);
+    const float pulseWidthPercentage = convertAngleToPulseWidth(pServoState->rotate_angle, pServoState->channel_number);
     this->setPulseWidth(pServoState->channel_number, pulseWidthPercentage);
-    ROS_INFO("Servo %d: [%frad]",  pServoState->channel_number, pServoState->rotate_angle);
+    ROS_INFO("Servo %d: [%f rad]",  pServoState->channel_number, pServoState->rotate_angle);
 }
 
-void CatixPlatform::listenerLegState(const CatixMessages::2DofLegStateConstPtr &pLegState)
+void CatixPlatform::listenerLegState(const catix_messages::TwoDofLegStateConstPtr &pLegState)
 {
     // TODO: Calculate angles to rotate links according to the required position
+    ROS_INFO("Leg %d: [%f m; %f rad]",  pLegState->leg_number, pLegState->posture_ro, pLegState->posture_phi);
 }
 
-void CatixPlatform::listenerPlatformState(const CatixMessages::8DofPlatformStateConstPtr &pPlatformState)
+void CatixPlatform::listenerPlatformState(const catix_messages::EightDofPlatformStateConstPtr &pPlatformState)
 {
     // TODO: Calculate and run trajectory for each leg to move/rotate accordingly
+    ROS_INFO("Platform: [%f m/s; %f rad/s]",  pPlatformState->move_speed, pPlatformState->rotate_speed);
 }
 
-servoparameters_t CatixPlatform::getDefaultParameters()
+CatixPlatform::servoparameters_t CatixPlatform::getDefaultParameters()
 {
-    const ServoParameters defaultParameters;
+    ServoParameters defaultParameters;
     defaultParameters.pulseWidthOffset = 0.0;
     defaultParameters.pulseWidthToAngleSlope = M_PI / 100.0;
     defaultParameters.pulseWidthMinimum = 0.0;

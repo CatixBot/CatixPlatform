@@ -1,12 +1,11 @@
 #pragma once
 
+#include <PCA9685.h>
 #include <ros/ros.h>
-#include <pca9685_msgs/ServoState.h>
-#include <pca9685_msgs/PwmState.h>
-
-//------------------------------------------------------------------------
-
-class PCA9585;
+#include <catix_messages/EightDofPlatformState.h>
+#include <catix_messages/TwoDofLegState.h>
+#include <catix_messages/ServoState.h>
+#include <catix_messages/PwmState.h>
 
 //------------------------------------------------------------------------
 
@@ -18,25 +17,33 @@ class CatixPlatform
     private:
         struct ServoParameters
         {
-            const double pulseWidthOffset;
-            const double pulseWidthToAngleSlope;
-            const double pulseWidthMinimum;
-            const double pulseWidthMaximum;
+            ServoParameters()
+                : pulseWidthOffset(0.0)
+                , pulseWidthToAngleSlope(0.0)
+                , pulseWidthMinimum(0.0)
+                , pulseWidthMaximum(0.0)
+            {
+            }
+
+            double pulseWidthOffset;
+            double pulseWidthToAngleSlope;
+            double pulseWidthMinimum;
+            double pulseWidthMaximum;
         };
 
     private:
-        using servoparameters_t = std::vector<uint8_t, ServoParameters>;
+        using servoparameters_t = std::vector<ServoParameters>;
 
     private:
-        void listenerPlatformState(const CatixMessages::8DofPlatformStateConstPtr &rPlatformState);
-        void listenerLegState(const CatixMessages::2DofLegStateConstPtr &rLegState);
-        void listenerServoState(const CatixMessages::ServoStateConstPtr &rServoState);
-        void listenerPwmState(const CatixMessages::PwmStateConstPtr &rPWMState);
+        void listenerPlatformState(const catix_messages::EightDofPlatformStateConstPtr &rPlatformState);
+        void listenerLegState(const catix_messages::TwoDofLegStateConstPtr &rLegState);
+        void listenerServoState(const catix_messages::ServoStateConstPtr &rServoState);
+        void listenerPwmState(const catix_messages::PwmStateConstPtr &rPWMState);
 
     private:
         servoparameters_t getDefaultParameters();
         void setPulseWidth(uint8_t channelNumber, float pulseWidthPercentage);
-        float convertAngleToPulseWidth(float angle);
+        float convertAngleToPulseWidth(float angle, uint8_t channelNumber);
 
     private:
         std::unique_ptr<PCA9685> pControllerPWM;

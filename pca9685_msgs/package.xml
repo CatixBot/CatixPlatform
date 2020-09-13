@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-    <name>CatixMessages</name>
+    <name>catix_messages</name>
     <version>0.0.1</version>
     <description>The uarm_msgs package</description>
     <maintainer email="bot.catix@gmail.com">catix</maintainer>

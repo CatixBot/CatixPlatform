@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ros_pca9685)
+project(catix_platform)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
-  pca9685_msgs
+  catix_messages
 )
 
 ## System dependencies are found with CMake's conventions
@@ -48,7 +48,7 @@ target_link_libraries(I2C ${catkin_LIBRARIES})
 add_library(PCA9685 src/lib/PCA9685/src/PCA9685.cpp)
 target_link_libraries(I2C PCA9685 ${catkin_LIBRARIES})
 
-add_executable(controller_sub src/controller_sub.cpp)
+add_executable(controller_sub src/controller_sub.cpp src/lib/I2C/src/I2C.cpp src/lib/PCA9685/src/PCA9685.cpp)
 target_link_libraries(controller_sub I2C PCA9685 ${catkin_LIBRARIES})
 
 
