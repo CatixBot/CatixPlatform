@@ -39,7 +39,10 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-   src/lib/PCA9685/src/ src/lib/I2C/src/ ${catkin_INCLUDE_DIRS}
+    src/
+    src/lib/PCA9685/src/ 
+    src/lib/I2C/src/ 
+    ${catkin_INCLUDE_DIRS}
 )
 
 add_library(I2C src/lib/I2C/src/I2C.cpp)
@@ -48,7 +51,6 @@ target_link_libraries(I2C ${catkin_LIBRARIES})
 add_library(PCA9685 src/lib/PCA9685/src/PCA9685.cpp)
 target_link_libraries(I2C PCA9685 ${catkin_LIBRARIES})
 
-add_executable(controller_sub src/controller_sub.cpp src/lib/I2C/src/I2C.cpp src/lib/PCA9685/src/PCA9685.cpp)
-target_link_libraries(controller_sub I2C PCA9685 ${catkin_LIBRARIES})
-
-
+file(GLOB_RECURSE ALL_SOURCES "*.cpp" "*.h")
+add_executable(PlatformNode ${ALL_SOURCES})
+target_link_libraries(PlatformNode I2C PCA9685 ${catkin_LIBRARIES})

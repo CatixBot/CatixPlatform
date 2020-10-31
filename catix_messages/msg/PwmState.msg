@@ -1,2 +1,0 @@
-uint8 channel_number
-float32 pulse_width_percentage

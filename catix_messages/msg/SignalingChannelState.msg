@@ -1,0 +1,2 @@
+uint8 signaling_channel_index
+float32 signal_strength_percentage

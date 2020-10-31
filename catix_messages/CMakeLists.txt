@@ -4,10 +4,12 @@ project(catix_messages)
 find_package(catkin REQUIRED genmsg std_msgs)
 
 add_message_files(FILES
-    TwoDofLegState.msg
+    CalibrationLimitValue.msg
+    CalibrationPointValue.msg
+    SignalingChannelState.msg
     EightDofPlatformState.msg
     ServoState.msg
-    PwmState.msg)
+    TwoDofLegState.msg)
 
 generate_messages(DEPENDENCIES std_msgs)
 

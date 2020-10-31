@@ -1,3 +1,3 @@
-uint8 leg_number
-float32 posture_ro
-float32 posture_phi
+uint8 leg_index
+float32 radial_coordinate
+float32 angular_coordinate
