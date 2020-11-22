@@ -1,3 +1,0 @@
-uint8 servo_index
-float32 signal_strength_percentage
-float32 rotate_angle
