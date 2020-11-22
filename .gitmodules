@@ -1,3 +1,9 @@
 [submodule "catix_messages"]
 	path = catix_messages
 	url = https://github.com/CatixBot/Messages.git
+[submodule "servo_node/src/lib/I2C"]
+	path = servo_node/src/lib/I2C
+	url = https://github.com/TeraHz/I2C
+[submodule "servo_node/src/lib/PCA9685"]
+	path = servo_node/src/lib/PCA9685
+	url = https://github.com/TeraHz/PCA9685
