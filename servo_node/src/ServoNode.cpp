@@ -56,28 +56,28 @@ std::vector<std::shared_ptr<servo::IServo>> makeServos(
 //---------------------------------------------------------------------------
 
 ServoNode::ServoNode()
-    : calibrationTable(NUMBER_OF_CHANNELS)
+    : calibrationTable(nodeHandle, NUMBER_OF_CHANNELS)
 {
     this->signalingController = makeSignalingController();
     this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
-    this->subscriberSignalingChannel = node.subscribe("Catix/SignalingChannel", 
+    this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
         100, &ServoNode::listenerSignalingChannelState, this);
     ROS_INFO("Signaling channels listener ready...");
 
     this->servos = makeServos(this->channels);
-    subscriberServo = node.subscribe("Catix/Servo", 100, &ServoNode::listenerServoState, this);
+    subscriberServo = nodeHandle.subscribe("Catix/Servo", 100, &ServoNode::listenerServoState, this);
     ROS_INFO("Servos listener ready...");
 
-    subscriberCalibrationFirstPoint = node.subscribe("Catix/CalibrationFirstPoint", 100, &ServoNode::listenerCalibrationFirstPoint, this);
+    subscriberCalibrationFirstPoint = nodeHandle.subscribe("Catix/CalibrationFirstPoint", 100, &ServoNode::listenerCalibrationFirstPoint, this);
     ROS_INFO("Calibration first points listener is ready...");
 
-    subscriberCalibrationSecondPoint = node.subscribe("Catix/CalibrationSecondPoint", 100, &ServoNode::listenerCalibrationSecondPoint, this);
+    subscriberCalibrationSecondPoint = nodeHandle.subscribe("Catix/CalibrationSecondPoint", 100, &ServoNode::listenerCalibrationSecondPoint, this);
     ROS_INFO("Calibration second points listener is ready...");
 
-    subscriberCalibrationLowerLimit = node.subscribe("Catix/CalibrationLowerLimit", 100, &ServoNode::listenerCalibrationLowerLimit, this);
+    subscriberCalibrationLowerLimit = nodeHandle.subscribe("Catix/CalibrationLowerLimit", 100, &ServoNode::listenerCalibrationLowerLimit, this);
     ROS_INFO("Lower limits listener is ready...");
 
-    subscriberCalibrationUpperLimit = node.subscribe("Catix/CalibrationUpperLimit", 100, &ServoNode::listenerCalibrationUpperLimit, this);
+    subscriberCalibrationUpperLimit = nodeHandle.subscribe("Catix/CalibrationUpperLimit", 100, &ServoNode::listenerCalibrationUpperLimit, this);
     ROS_INFO("Upper limits listener is ready...");
 }
 

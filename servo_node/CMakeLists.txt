@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -42,15 +41,29 @@ include_directories(
     src/
     src/lib/PCA9685/src/ 
     src/lib/I2C/src/ 
-    ${catkin_INCLUDE_DIRS}
-)
+    ${catkin_INCLUDE_DIRS})
 
-add_library(I2C src/lib/I2C/src/I2C.cpp)
-target_link_libraries(I2C ${catkin_LIBRARIES})
+add_library(I2C 
+    src/lib/I2C/src/I2C.cpp)
 
-add_library(PCA9685 src/lib/PCA9685/src/PCA9685.cpp)
-target_link_libraries(I2C PCA9685 ${catkin_LIBRARIES})
+target_link_libraries(I2C 
+    ${catkin_LIBRARIES})
 
-file(GLOB_RECURSE ALL_SOURCES "*.cpp" "*.h")
-add_executable(PlatformNode ${ALL_SOURCES})
-target_link_libraries(PlatformNode I2C PCA9685 ${catkin_LIBRARIES})
+add_library(PCA9685 
+    src/lib/PCA9685/src/PCA9685.cpp)
+
+target_link_libraries(I2C 
+    PCA9685 
+    ${catkin_LIBRARIES})
+
+file(GLOB_RECURSE ALL_SOURCES 
+    "*.cpp" 
+    "*.h")
+
+add_executable(PlatformNode 
+    ${ALL_SOURCES})
+
+target_link_libraries(PlatformNode 
+    I2C 
+    PCA9685 
+    ${catkin_LIBRARIES})

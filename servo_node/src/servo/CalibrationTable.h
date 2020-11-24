@@ -2,6 +2,7 @@
 
 #include "servo/ServoParameters.h"
 
+#include <ros/ros.h>
 #include <vector>
 
 namespace servo
@@ -9,7 +10,7 @@ namespace servo
     class CalibrationTable
     {
     public:
-        CalibrationTable(size_t tableSize);
+        CalibrationTable(ros::NodeHandle &nodeHandle, size_t tableSize);
 
     public:
         void resetPoints(size_t index);
@@ -25,17 +26,24 @@ namespace servo
     private:
         struct CalibrationPoints
         {
-            double firstPointPulseWidth = -1.0;
+            double firstPointSignalStrength = -1.0;
             double firstPointRotateAngle = 0.0;
-            double secondPointPulseWidth = -1.0;
+            double secondPointSignalStrength = -1.0;
             double secondPointRotateAngle = 0.0;
         };
 
     private:
         bool isCalibrationPointsCorrect(const CalibrationPoints &calibrationPoints);
-        void calculateCalibration(size_t index, const CalibrationPoints &calibrationPoints);
+        bool calculateIndexCalibration(size_t index, const CalibrationPoints &calibrationPoints);
+        bool calculateAllCalibrations();
+
+        void loadAllCalibrationPoints();
+        void storeCalibrationPoints(std::string servoKey, const CalibrationPoints& calibrationPoints);
+        CalibrationPoints loadCalibrationPoints(std::string servoKey);
 
     private:
+        ros::NodeHandle &nodeHandle;
+
         std::vector<servo::ServoParameters> tableOutput;
         std::vector<CalibrationPoints> tableInput;
     };

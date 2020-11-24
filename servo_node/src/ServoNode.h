@@ -31,7 +31,7 @@ class ServoNode
     private:
         servo::CalibrationTable calibrationTable;
 
-        ros::NodeHandle node;
+        ros::NodeHandle nodeHandle;
         ros::Subscriber subscriberServo;
         ros::Subscriber subscriberSignalingChannel;
 
