@@ -8,7 +8,7 @@
 
 //---------------------------------------------------------------------------
 
-#define NUMBER_OF_CHANNELS 16
+#define NUMBER_OF_CHANNELS 8
 
 //---------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ std::vector<std::shared_ptr<servo::IServo>> makeServos(
     const size_t EXPECTED_NUMBER_OF_CHANNELS = 8;
     const size_t PROVIDED_NUMBER_OF_CHANNELS = signalingChannels.size();
 
-    if (PROVIDED_NUMBER_OF_CHANNELS != EXPECTED_NUMBER_OF_CHANNELS)
+    if (PROVIDED_NUMBER_OF_CHANNELS < EXPECTED_NUMBER_OF_CHANNELS)
     {
         ROS_ERROR("Signaling channels can't be constructed as %d signaling channels provided, \
             but %d signaling channels expected", PROVIDED_NUMBER_OF_CHANNELS, EXPECTED_NUMBER_OF_CHANNELS);
@@ -56,8 +56,9 @@ std::vector<std::shared_ptr<servo::IServo>> makeServos(
 //---------------------------------------------------------------------------
 
 ServoNode::ServoNode()
-    : calibrationTable(nodeHandle, NUMBER_OF_CHANNELS)
 {
+    this->calibrationTable = std::make_unique<servo::CalibrationTable>(nodeHandle, NUMBER_OF_CHANNELS);
+
     this->signalingController = makeSignalingController();
     this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
     this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
@@ -124,10 +125,10 @@ void ServoNode::listenerCalibrationFirstPoint(const catix_messages::CalibrationP
     auto signalStrengthPercentage = calibrationPointValue->signal_strength_percentage;
     auto rotateAngle = calibrationPointValue->rotate_angle;
 
-    this->calibrationTable.resetPoints(servoIndex);
+    this->calibrationTable->resetPoints(servoIndex);
     ROS_INFO("Servo %d: Calibration points reset to undefined values", servoIndex);
 
-    if(!calibrationTable.setFirstPoint(servoIndex, signalStrengthPercentage, rotateAngle))
+    if(!this->calibrationTable->setFirstPoint(servoIndex, signalStrengthPercentage, rotateAngle))
     {
         ROS_ERROR("Servo %d: Can't set first calibration point", servoIndex);
         return;
@@ -143,7 +144,7 @@ void ServoNode::listenerCalibrationSecondPoint(const catix_messages::Calibration
     auto signalStrengthPercentage = calibrationPointValue->signal_strength_percentage;
     auto rotateAngle = calibrationPointValue->rotate_angle;
 
-    if(!calibrationTable.setSecondPoint(servoIndex, signalStrengthPercentage, rotateAngle))
+    if(!this->calibrationTable->setSecondPoint(servoIndex, signalStrengthPercentage, rotateAngle))
     {
         ROS_ERROR("Servo %d: Can't set first calibration point", servoIndex);
         return;
@@ -158,7 +159,7 @@ void ServoNode::listenerCalibrationLowerLimit(const catix_messages::CalibrationL
     const size_t servoIndex = static_cast<size_t>(calibrationLimitValue->servo_index);
     const double signalStrengthPercentage = calibrationLimitValue->signal_strength_percentage;
 
-    if(!calibrationTable.setLowerLimit(servoIndex, signalStrengthPercentage))
+    if(!this->calibrationTable->setLowerLimit(servoIndex, signalStrengthPercentage))
     {
         ROS_ERROR("Servo %d: Can't set lower limit", servoIndex);
         return;
@@ -172,7 +173,7 @@ void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationL
     const size_t servoIndex = static_cast<size_t>(calibrationLimitValue->servo_index);
     const double signalStrengthPercentage = calibrationLimitValue->signal_strength_percentage;
 
-    if(!calibrationTable.setUpperLimit(servoIndex, signalStrengthPercentage))
+    if(!this->calibrationTable->setUpperLimit(servoIndex, signalStrengthPercentage))
     {
         ROS_ERROR("Servo %d: Can't set upper limit", servoIndex);
         return;
@@ -183,7 +184,7 @@ void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationL
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "CatixPlatform");
+    ros::init(argc, argv, "ServoNode");
 
     ServoNode ServoNode;
     ros::spin();

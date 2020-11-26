@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(catix_platform)
+project(servo_node)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -60,10 +60,10 @@ file(GLOB_RECURSE ALL_SOURCES
     "*.cpp" 
     "*.h")
 
-add_executable(PlatformNode 
+add_executable(ServoNode 
     ${ALL_SOURCES})
 
-target_link_libraries(PlatformNode 
+target_link_libraries(ServoNode 
     I2C 
     PCA9685 
     ${catkin_LIBRARIES})

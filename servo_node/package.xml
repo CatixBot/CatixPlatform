@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>catix_platform</name>
-  <version>0.0.1</version>
-  <description>Catix platform node</description>
+  <name>servo_node</name>
+  <version>0.1.0</version>
+  <description>Servo node</description>
   <maintainer email="bot.catix@gmail.com">catix</maintainer>
   <license>MIT</license>
 

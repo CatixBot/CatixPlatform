@@ -119,6 +119,8 @@ bool servo::CalibrationTable::isCalibrationPointsCorrect(const CalibrationPoints
 
 bool servo::CalibrationTable::calculateAllCalibrations()
 {
+    ROS_DEBUG("Calibration table: calculate all calibrations");
+
     for (size_t i = 0; i < this->tableInput.size(); ++i)
     {
         calculateIndexCalibration(i, this->tableInput[i]);
@@ -127,6 +129,8 @@ bool servo::CalibrationTable::calculateAllCalibrations()
 
 bool servo::CalibrationTable::calculateIndexCalibration(size_t index, const CalibrationPoints &calibrationPoints)
 {
+    ROS_DEBUG("Calibration table: calculate servo %d calibration", index);
+
     if (!this->isCalibrationPointsCorrect(calibrationPoints))
     {
         ROS_WARN("Servo %d: Can't calculate calibration at index %d as its points are incorrect. \
@@ -151,6 +155,8 @@ bool servo::CalibrationTable::calculateIndexCalibration(size_t index, const Cali
 
 void servo::CalibrationTable::loadAllCalibrationPoints()
 {
+    ROS_DEBUG("Calibration table: load all calibrations");
+
     for (size_t i = 0; i < this->tableInput.size(); ++i)
     {
         const auto servoKey = generateServoKey(i);
@@ -175,6 +181,8 @@ void servo::CalibrationTable::storeCalibrationPoints(std::string servoKey, const
 
 servo::CalibrationTable::CalibrationPoints servo::CalibrationTable::loadCalibrationPoints(std::string servoKey)
 {
+    ROS_DEBUG("Calibration table: load calibration points by %s key", servoKey.c_str());
+
     CalibrationPoints calibrationPoints;
     if (this->nodeHandle.getParam(generateFirstPointPercentageKey(servoKey), calibrationPoints.firstPointSignalStrength) &&
         this->nodeHandle.getParam(generateFirstPointAngleKey(servoKey), calibrationPoints.firstPointRotateAngle) &&

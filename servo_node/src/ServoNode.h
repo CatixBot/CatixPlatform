@@ -29,7 +29,7 @@ class ServoNode
         void listenerCalibrationUpperLimit(const catix_messages::CalibrationLimitValueConstPtr &rCalibrationLimitValue);
 
     private:
-        servo::CalibrationTable calibrationTable;
+        std::unique_ptr<servo::CalibrationTable> calibrationTable;
 
         ros::NodeHandle nodeHandle;
         ros::Subscriber subscriberServo;
