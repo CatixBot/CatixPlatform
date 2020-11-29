@@ -185,7 +185,13 @@ void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationL
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "ServoNode");
+    if (!ros::master::check())
+    {
+        std::cerr << "ROS Master is not running" << std::endl;
+        return 1;
+    }
 
     ServoNode ServoNode;
     ros::spin();
+    return 0;
 }
