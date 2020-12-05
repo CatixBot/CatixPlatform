@@ -15,10 +15,10 @@ namespace servo
     public:
         void resetPoints(size_t index);
 
-        bool setFirstPoint(size_t index, double pulseWidth, double rotateAngle);
-        bool setSecondPoint(size_t index, double pulseWidth, double rotateAngle);
-        bool setLowerLimit(size_t index, double pulseWidth);
-        bool setUpperLimit(size_t index, double pulseWidth);
+        bool setFirstPoint(size_t index, double signalStrength, double rotateAngle);
+        bool setSecondPoint(size_t index, double signalStrength, double rotateAngle);
+        bool setLowerLimit(size_t index, double signalStrength);
+        bool setUpperLimit(size_t index, double signalStrength);
 
         bool isCalibrationRecordProvided();
         servo::ServoParameters getCalibrationRecord();
@@ -40,6 +40,12 @@ namespace servo
         void loadAllCalibrationPoints();
         void storeCalibrationPoints(std::string servoKey, const CalibrationPoints& calibrationPoints);
         CalibrationPoints loadCalibrationPoints(std::string servoKey);
+
+        void loadAllLimits();
+        void storeLowerLimit(std::string servoKey, double lowerLimit);
+        double loadLowerLimit(std::string servoKey);
+        void storeUpperLimit(std::string servoKey, double upperLimit);
+        double loadUpperLimit(std::string servoKey);
 
     private:
         ros::NodeHandle &nodeHandle;

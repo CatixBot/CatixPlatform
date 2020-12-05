@@ -29,6 +29,16 @@ std::string generateSecondPointAngleKey(std::string servoKey)
     return servoKey + "/SecondPointAngle";
 }
 
+std::string generateLowerLimitKey(std::string servoKey)
+{
+    return servoKey + "/LowerLimit";
+}
+
+std::string generateUpperLimitKey(std::string servoKey)
+{
+    return servoKey + "/UpperLimit";
+}
+
 //---------------------------------------------------------------------------
 
 servo::CalibrationTable::CalibrationTable(ros::NodeHandle &nodeHandle, size_t tableSize)
@@ -38,6 +48,7 @@ servo::CalibrationTable::CalibrationTable(ros::NodeHandle &nodeHandle, size_t ta
 {
     this->loadAllCalibrationPoints();
     this->calculateAllCalibrations();
+    this->loadAllLimits();
 }
 
 void servo::CalibrationTable::resetPoints(size_t index)
@@ -51,7 +62,7 @@ void servo::CalibrationTable::resetPoints(size_t index)
     this->tableInput[index] = CalibrationPoints{};
 }
 
-bool servo::CalibrationTable::setFirstPoint(size_t index, double pulseWidth, double rotateAngle)
+bool servo::CalibrationTable::setFirstPoint(size_t index, double signalStrength, double rotateAngle)
 {
     if (index > this->tableInput.size())
     {
@@ -59,12 +70,12 @@ bool servo::CalibrationTable::setFirstPoint(size_t index, double pulseWidth, dou
             index, index);
     }
 
-    this->tableInput[index].firstPointSignalStrength = pulseWidth;
+    this->tableInput[index].firstPointSignalStrength = signalStrength;
     this->tableInput[index].firstPointRotateAngle = rotateAngle;
     return true;
 }
 
-bool servo::CalibrationTable::setSecondPoint(size_t index, double pulseWidth, double rotateAngle)
+bool servo::CalibrationTable::setSecondPoint(size_t index, double signalStrength, double rotateAngle)
 {
     if (index > this->tableInput.size())
     {
@@ -73,7 +84,7 @@ bool servo::CalibrationTable::setSecondPoint(size_t index, double pulseWidth, do
         return false;
     }
 
-    this->tableInput[index].secondPointSignalStrength = pulseWidth;
+    this->tableInput[index].secondPointSignalStrength = signalStrength;
     this->tableInput[index].secondPointRotateAngle = rotateAngle;
 
     if (!this->calculateIndexCalibration(index, this->tableInput[index]))
@@ -85,7 +96,7 @@ bool servo::CalibrationTable::setSecondPoint(size_t index, double pulseWidth, do
     return true;
 }
 
-bool servo::CalibrationTable::setLowerLimit(size_t index, double pulseWidth)
+bool servo::CalibrationTable::setLowerLimit(size_t index, double signalStrength)
 {
     if (index > this->tableOutput.size())
     {
@@ -94,11 +105,12 @@ bool servo::CalibrationTable::setLowerLimit(size_t index, double pulseWidth)
         return false;
     }
 
-    this->tableOutput[index].pulseWidthMinimum = pulseWidth;
+    this->tableOutput[index].signalStrengthMinimum = signalStrength;
+    storeLowerLimit(generateServoKey(index), signalStrength);
     return true;
 }
 
-bool servo::CalibrationTable::setUpperLimit(size_t index, double pulseWidth)
+bool servo::CalibrationTable::setUpperLimit(size_t index, double signalStrength)
 {
     if (index > this->tableOutput.size())
     {
@@ -107,7 +119,8 @@ bool servo::CalibrationTable::setUpperLimit(size_t index, double pulseWidth)
         return false;
     }
 
-    this->tableOutput[index].pulseWidthMaximum = pulseWidth;
+    this->tableOutput[index].signalStrengthMaximum = signalStrength;
+    storeUpperLimit(generateServoKey(index), signalStrength);
     return true;
 }
 
@@ -146,16 +159,16 @@ bool servo::CalibrationTable::calculateIndexCalibration(size_t index, const Cali
     }
 
     auto &servoParameters = this->tableOutput[index];
-    servoParameters.pulseWidthToAngleSlope = (modifiedCalibrationPoints.secondPointSignalStrength - modifiedCalibrationPoints.firstPointSignalStrength) /
+    servoParameters.signalStrengthToAngleSlope = (modifiedCalibrationPoints.secondPointSignalStrength - modifiedCalibrationPoints.firstPointSignalStrength) /
         (modifiedCalibrationPoints.secondPointRotateAngle - modifiedCalibrationPoints.firstPointRotateAngle);
-    servoParameters.pulseWidthOffset = modifiedCalibrationPoints.secondPointSignalStrength - 
-        (servoParameters.pulseWidthToAngleSlope * modifiedCalibrationPoints.firstPointRotateAngle);
+    servoParameters.signalStrengthOffset = modifiedCalibrationPoints.secondPointSignalStrength - 
+        (servoParameters.signalStrengthToAngleSlope * modifiedCalibrationPoints.firstPointRotateAngle);
     return true;
 }
 
 void servo::CalibrationTable::loadAllCalibrationPoints()
 {
-    ROS_DEBUG("Calibration table: load all calibrations");
+    ROS_DEBUG("Calibration table: load all calibration points");
 
     for (size_t i = 0; i < this->tableInput.size(); ++i)
     {
@@ -194,4 +207,73 @@ servo::CalibrationTable::CalibrationPoints servo::CalibrationTable::loadCalibrat
 
     ROS_ERROR("Can't load calibration points by key '%s'", servoKey.c_str());
     return CalibrationPoints{};
+}
+
+void servo::CalibrationTable::loadAllLimits()
+{
+    ROS_DEBUG("Calibration table: load all calibration limits");
+
+    for (size_t i = 0; i < this->tableOutput.size(); ++i)
+    {
+        const auto servoKey = generateServoKey(i);
+        if (!this->nodeHandle.hasParam(servoKey))
+        {
+            storeLowerLimit(servoKey, SIGNAL_STRENGTH_MINIMUM_DEFAULT);
+            storeUpperLimit(servoKey, SIGNAL_STRENGTH_MAXIMUM_DEFAULT);
+        }
+        else
+        {
+            this->tableOutput[i].signalStrengthMinimum = loadLowerLimit(servoKey);
+            this->tableOutput[i].signalStrengthMaximum = loadUpperLimit(servoKey);
+        }
+    }
+}
+
+void servo::CalibrationTable::storeLowerLimit(std::string servoKey, double lowerLimit)
+{
+    ROS_DEBUG("Calibration table: load lower limit by '%s' key", servoKey.c_str());
+
+    this->nodeHandle.setParam(generateLowerLimitKey(servoKey), lowerLimit);
+}
+
+double servo::CalibrationTable::loadLowerLimit(std::string servoKey)
+{
+    ROS_DEBUG("Calibration table: load lower limit by '%s' key", servoKey.c_str());
+
+    double lowerLimit = SIGNAL_STRENGTH_MINIMUM_DEFAULT;
+    if (this->nodeHandle.getParam(generateLowerLimitKey(servoKey), lowerLimit))
+    {
+        ROS_DEBUG("Calibration table: lower limit value %f%% loaded", lowerLimit);
+    }
+    else
+    {
+        ROS_ERROR("Calibration table: Can't load lower limit by key '%s'. Return %f%% value by default", 
+            servoKey.c_str(), lowerLimit);
+    }
+
+    return lowerLimit;
+}
+
+void servo::CalibrationTable::storeUpperLimit(std::string servoKey, double upperLimit)
+{
+    ROS_DEBUG("Calibration table: load upper limit by '%s' key", servoKey.c_str());
+
+    this->nodeHandle.setParam(generateUpperLimitKey(servoKey), upperLimit);
+}
+
+double servo::CalibrationTable::loadUpperLimit(std::string servoKey)
+{
+    ROS_DEBUG("Calibration table: load upper limit by '%s' key", servoKey.c_str());
+
+    double upperLimit = SIGNAL_STRENGTH_MAXIMUM_DEFAULT;
+    if (this->nodeHandle.getParam(generateUpperLimitKey(servoKey), upperLimit))
+    {
+        ROS_DEBUG("Calibration table: upper limit value %f%% loaded", upperLimit);
+    }
+    {
+        ROS_ERROR("Calibration table: Can't load upper limit by key '%s'. Return %f%% value by default", 
+            servoKey.c_str(), upperLimit);
+    }
+
+    return upperLimit;
 }

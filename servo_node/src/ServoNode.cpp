@@ -62,24 +62,24 @@ ServoNode::ServoNode()
     this->signalingController = makeSignalingController();
     this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
     this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
-        100, &ServoNode::listenerSignalingChannelState, this);
-    ROS_INFO("Signaling channels listener ready...");
+        1, &ServoNode::listenerSignalingChannelState, this);
+    ROS_INFO("Signaling channel: listener ready");
 
     this->servos = makeServos(this->channels);
-    subscriberServo = nodeHandle.subscribe("Catix/Servo", 100, &ServoNode::listenerServoState, this);
-    ROS_INFO("Servos listener ready...");
+    subscriberServo = nodeHandle.subscribe("Catix/Servo", 1, &ServoNode::listenerServoState, this);
+    ROS_INFO("Servo: listener ready");
 
-    subscriberCalibrationFirstPoint = nodeHandle.subscribe("Catix/CalibrationFirstPoint", 100, &ServoNode::listenerCalibrationFirstPoint, this);
-    ROS_INFO("Calibration first points listener is ready...");
+    subscriberCalibrationFirstPoint = nodeHandle.subscribe("Catix/CalibrationFirstPoint", 1, &ServoNode::listenerCalibrationFirstPoint, this);
+    ROS_INFO("Calibration table: first point listener ready");
 
-    subscriberCalibrationSecondPoint = nodeHandle.subscribe("Catix/CalibrationSecondPoint", 100, &ServoNode::listenerCalibrationSecondPoint, this);
-    ROS_INFO("Calibration second points listener is ready...");
+    subscriberCalibrationSecondPoint = nodeHandle.subscribe("Catix/CalibrationSecondPoint", 1, &ServoNode::listenerCalibrationSecondPoint, this);
+    ROS_INFO("Calibration table: second point listener ready");
 
-    subscriberCalibrationLowerLimit = nodeHandle.subscribe("Catix/CalibrationLowerLimit", 100, &ServoNode::listenerCalibrationLowerLimit, this);
-    ROS_INFO("Lower limits listener is ready...");
+    subscriberCalibrationLowerLimit = nodeHandle.subscribe("Catix/CalibrationLowerLimit", 1, &ServoNode::listenerCalibrationLowerLimit, this);
+    ROS_INFO("Calibration table: lower limit listener ready");
 
-    subscriberCalibrationUpperLimit = nodeHandle.subscribe("Catix/CalibrationUpperLimit", 100, &ServoNode::listenerCalibrationUpperLimit, this);
-    ROS_INFO("Upper limits listener is ready...");
+    subscriberCalibrationUpperLimit = nodeHandle.subscribe("Catix/CalibrationUpperLimit", 1, &ServoNode::listenerCalibrationUpperLimit, this);
+    ROS_INFO("Calibration table: upper limit listener ready");
 }
 
 void ServoNode::listenerSignalingChannelState(const catix_messages::SignalingChannelStateConstPtr &signalingChannelState)
@@ -105,13 +105,13 @@ void ServoNode::listenerServoState(const catix_messages::ServoStateConstPtr &ser
 
     if (servoIndex >= this->servos.size())
     {
-        ROS_ERROR("Servo %d: Can't set rotate angle as servo is not available", servoIndex);
+        ROS_ERROR("Servo %d: can't set rotate angle as servo is not available", servoIndex);
         return;
     }
 
     if(!this->servos[servoIndex]->setAngle(rotateAngle))
     {
-        ROS_ERROR("Servo %d: Settings rotate angle %frad failed", 
+        ROS_ERROR("Servo %d: can't set rotate angle %frad value", 
             servoIndex, rotateAngle);
         return;
     }
@@ -126,15 +126,15 @@ void ServoNode::listenerCalibrationFirstPoint(const catix_messages::CalibrationP
     auto rotateAngle = calibrationPointValue->rotate_angle;
 
     this->calibrationTable->resetPoints(servoIndex);
-    ROS_INFO("Servo %d: Calibration points reset to undefined values", servoIndex);
+    ROS_INFO("Servo %d: calibration points reset to undefined state", servoIndex);
 
     if(!this->calibrationTable->setFirstPoint(servoIndex, signalStrengthPercentage, rotateAngle))
     {
-        ROS_ERROR("Servo %d: Can't set first calibration point", servoIndex);
+        ROS_ERROR("Servo %d: can't set first calibration point", servoIndex);
         return;
     }
 
-    ROS_INFO("Servo %d: First calibration point set to [%f%%; %fm/s]",  
+    ROS_INFO("Servo %d: first calibration point set to [%f%%; %fm/s]",  
         servoIndex, signalStrengthPercentage, rotateAngle);
 }
 
@@ -146,11 +146,11 @@ void ServoNode::listenerCalibrationSecondPoint(const catix_messages::Calibration
 
     if(!this->calibrationTable->setSecondPoint(servoIndex, signalStrengthPercentage, rotateAngle))
     {
-        ROS_ERROR("Servo %d: Can't set first calibration point", servoIndex);
+        ROS_ERROR("Servo %d: can't set second calibration point", servoIndex);
         return;
     }
 
-    ROS_INFO("Servo %d: Second calibration point set to [%f%%; %fm/s]",  
+    ROS_INFO("Servo %d: second calibration point set to [%f%%; %fm/s]",  
         servoIndex, signalStrengthPercentage, rotateAngle);
 }
 
@@ -161,11 +161,11 @@ void ServoNode::listenerCalibrationLowerLimit(const catix_messages::CalibrationL
 
     if(!this->calibrationTable->setLowerLimit(servoIndex, signalStrengthPercentage))
     {
-        ROS_ERROR("Servo %d: Can't set lower limit", servoIndex);
+        ROS_ERROR("Servo %d: can't set lower limit", servoIndex);
         return;
     }
 
-    ROS_INFO("Servo %d: Lower limit set to [%f%%]", servoIndex, signalStrengthPercentage);
+    ROS_INFO("Servo %d: lower limit set to [%f%%]", servoIndex, signalStrengthPercentage);
 }
 
 void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationLimitValueConstPtr &calibrationLimitValue)
@@ -175,11 +175,11 @@ void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationL
 
     if(!this->calibrationTable->setUpperLimit(servoIndex, signalStrengthPercentage))
     {
-        ROS_ERROR("Servo %d: Can't set upper limit", servoIndex);
+        ROS_ERROR("Servo %d: can't set upper limit", servoIndex);
         return;
     }
         
-    ROS_INFO("Servo %d: Lower upper set to [%f%%]", servoIndex, signalStrengthPercentage);
+    ROS_INFO("Servo %d: upper limit set to [%f%%]", servoIndex, signalStrengthPercentage);
 }
 
 int main(int argc, char **argv)

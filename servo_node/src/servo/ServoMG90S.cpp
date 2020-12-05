@@ -15,26 +15,26 @@ void servo::ServoMG90S::setParameters(servo::ServoParameters servoParameters)
 
 bool servo::ServoMG90S::setAngle(double angleRadians)
 {
-    float pulseWidthPercentage = this->servoParameters.pulseWidthToAngleSlope * angleRadians + 
-        servoParameters.pulseWidthOffset;
+    float signalStrengthPercentage = this->servoParameters.signalStrengthToAngleSlope * angleRadians + 
+        servoParameters.signalStrengthOffset;
 
-    if (pulseWidthPercentage > this->servoParameters.pulseWidthMaximum)
+    if (signalStrengthPercentage > this->servoParameters.signalStrengthMaximum)
     {
-        ROS_WARN("Servo %d: Provided angle %frad is greater than possible maximum", 
+        ROS_WARN("Servo %d: provided angle %frad is greater than possible maximum", 
             this->servoIndex, angleRadians);
-        pulseWidthPercentage = this->servoParameters.pulseWidthMaximum;
-        ROS_INFO("Servo %d: Result signal strength percentage decreased to %f%%", 
-            this->servoIndex, pulseWidthPercentage);
+        signalStrengthPercentage = this->servoParameters.signalStrengthMaximum;
+        ROS_INFO("Servo %d: result signal strength percentage decreased to %f%%", 
+            this->servoIndex, signalStrengthPercentage);
     }
 
-    if (pulseWidthPercentage < this->servoParameters.pulseWidthMinimum)
+    if (signalStrengthPercentage < this->servoParameters.signalStrengthMinimum)
     {
-        ROS_WARN("Servo %d: Provided angle %frad is less than possible minimum", 
+        ROS_WARN("Servo %d: provided angle %frad is less than possible minimum", 
             this->servoIndex, angleRadians);
-        pulseWidthPercentage = this->servoParameters.pulseWidthMinimum;
-        ROS_INFO("Servo %d: Result signal strength percentage increased to %f%%", 
-            this->servoIndex, pulseWidthPercentage);
+        signalStrengthPercentage = this->servoParameters.signalStrengthMinimum;
+        ROS_INFO("Servo %d: result signal strength percentage increased to %f%%", 
+            this->servoIndex, signalStrengthPercentage);
     }
 
-    return this->signalingChannel->setStrength(pulseWidthPercentage);
+    return this->signalingChannel->setStrength(signalStrengthPercentage);
 }
