@@ -14,10 +14,8 @@ namespace servo
         ServoMG90S(uint8_t servoIndex, std::shared_ptr<servo::ISignalingChannel> signalingChannel);
 
     public:
-        void setParameters(servo::ServoParameters servoParameters);
-
-    public:
         bool setAngle(double angleRadians) override;
+        void setParameters(servo::ServoParameters servoParameters) override;
 
     private:
         void fixIncorrectLimits();

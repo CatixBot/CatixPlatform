@@ -42,21 +42,21 @@ std::string generateUpperLimitKey(std::string servoKey)
 //---------------------------------------------------------------------------
 
 servo::CalibrationTable::CalibrationTable(ros::NodeHandle &nodeHandle, size_t tableSize)
-    : tableInput(tableSize)
+    : tableListeners(tableSize)
+    , tableInput(tableSize)
     , tableOutput(tableSize)
     , nodeHandle(nodeHandle)
 {
-    this->loadAllCalibrationPoints();
-    this->calculateAllCalibrations();
-    this->loadAllLimits();
+    loadAllCalibrationPoints();
+    calculateAllCalibrations();
+    loadAllLimits();
 }
 
 void servo::CalibrationTable::resetPoints(size_t index)
 {
     if (index > this->tableInput.size())
     {
-        ROS_ERROR("Servo %d: Can't reset calibration points as index %d is out of table range", 
-            index, index);
+        ROS_ERROR("Calibration table: can't reset calibration points as index %d is out of table range", index);
     }
 
     this->tableInput[index] = CalibrationPoints{};
@@ -66,8 +66,7 @@ bool servo::CalibrationTable::setFirstPoint(size_t index, double signalStrength,
 {
     if (index > this->tableInput.size())
     {
-        ROS_ERROR("Servo %d: Can't set first calibration point as index %d is out of table range", 
-            index, index);
+        ROS_ERROR("Calibration table: can't set first calibration point as index %d is out of table range", index);
     }
 
     this->tableInput[index].firstPointSignalStrength = signalStrength;
@@ -79,8 +78,7 @@ bool servo::CalibrationTable::setSecondPoint(size_t index, double signalStrength
 {
     if (index > this->tableInput.size())
     {
-        ROS_ERROR("Servo %d: Can't set second calibration point as index %d is out of table range", 
-            index, index);
+        ROS_ERROR("Calibration table: can't set second calibration point as index %d is out of table range", index);
         return false;
     }
 
@@ -93,6 +91,7 @@ bool servo::CalibrationTable::setSecondPoint(size_t index, double signalStrength
     }
 
     storeCalibrationPoints(generateServoKey(index), this->tableInput[index]);
+    notifyServoParameters(index);
     return true;
 }
 
@@ -100,13 +99,13 @@ bool servo::CalibrationTable::setLowerLimit(size_t index, double signalStrength)
 {
     if (index > this->tableOutput.size())
     {
-        ROS_ERROR("Servo %d: Can't set lower limit in calibration table as index %d is out of table range", 
-            index, index);
+        ROS_ERROR("Calibration table: can't set lower limit in calibration table as index %d is out of table range", index);
         return false;
     }
 
     this->tableOutput[index].signalStrengthMinimum = signalStrength;
     storeLowerLimit(generateServoKey(index), signalStrength);
+    notifyServoParameters(index);
     return true;
 }
 
@@ -114,14 +113,34 @@ bool servo::CalibrationTable::setUpperLimit(size_t index, double signalStrength)
 {
     if (index > this->tableOutput.size())
     {
-        ROS_ERROR("Servo %d: Can't set upper limit in calibration table as index %d is out of table range", 
-            index, index);
+        ROS_ERROR("Calibration table: can't set upper limit in calibration table as index %d is out of table range", index);
         return false;
     }
 
     this->tableOutput[index].signalStrengthMaximum = signalStrength;
     storeUpperLimit(generateServoKey(index), signalStrength);
+    notifyServoParameters(index);
     return true;
+}
+
+void servo::CalibrationTable::subscribeListener(size_t index, std::shared_ptr<servo::IServo> servo)
+{
+    if (index > this->tableListeners.size())
+    {
+        ROS_ERROR("Calibration table: can't subscribe listener for calibration parameters "
+            "as index %d is out of table range", index);
+        return;
+    }
+
+    tableListeners[index] = servo;
+}
+
+void servo::CalibrationTable::updateListeners()
+{
+    for (size_t i = 0; i < this->tableListeners.size(); ++i)
+    {
+        notifyServoParameters(i);
+    }
 }
 
 bool servo::CalibrationTable::isCalibrationPointsCorrect(const CalibrationPoints &calibrationPoints)
@@ -146,8 +165,8 @@ bool servo::CalibrationTable::calculateIndexCalibration(size_t index, const Cali
 
     if (!this->isCalibrationPointsCorrect(calibrationPoints))
     {
-        ROS_WARN("Servo %d: Can't calculate calibration at index %d as its points are incorrect. \
-            Repeat calibration procedure starting from the first point", index, index);
+        ROS_WARN("Calibration table: can't calculate calibration at index %d as its points are incorrect. "
+            "Repeat calibration procedure starting from the first point", index);
         return false;
     }
 
@@ -194,7 +213,7 @@ void servo::CalibrationTable::storeCalibrationPoints(std::string servoKey, const
 
 servo::CalibrationTable::CalibrationPoints servo::CalibrationTable::loadCalibrationPoints(std::string servoKey)
 {
-    ROS_DEBUG("Calibration table: load calibration points by %s key", servoKey.c_str());
+    ROS_DEBUG("Calibration table: load calibration points by '%s' key", servoKey.c_str());
 
     CalibrationPoints calibrationPoints;
     if (this->nodeHandle.getParam(generateFirstPointPercentageKey(servoKey), calibrationPoints.firstPointSignalStrength) &&
@@ -205,7 +224,7 @@ servo::CalibrationTable::CalibrationPoints servo::CalibrationTable::loadCalibrat
         return calibrationPoints;
     }
 
-    ROS_ERROR("Can't load calibration points by key '%s'", servoKey.c_str());
+    ROS_ERROR("Calibration table: can't load calibration points by '%s' key from ROS", servoKey.c_str());
     return CalibrationPoints{};
 }
 
@@ -247,7 +266,7 @@ double servo::CalibrationTable::loadLowerLimit(std::string servoKey)
     }
     else
     {
-        ROS_ERROR("Calibration table: Can't load lower limit by key '%s'. Return %f%% value by default", 
+        ROS_ERROR("Calibration table: can't load lower limit by '%s' key from ROS. Return %f%% value by default", 
             servoKey.c_str(), lowerLimit);
     }
 
@@ -271,9 +290,19 @@ double servo::CalibrationTable::loadUpperLimit(std::string servoKey)
         ROS_DEBUG("Calibration table: upper limit value %f%% loaded", upperLimit);
     }
     {
-        ROS_ERROR("Calibration table: Can't load upper limit by key '%s'. Return %f%% value by default", 
+        ROS_ERROR("Calibration table: can't load upper limit by key '%s'. Return %f%% value by default", 
             servoKey.c_str(), upperLimit);
     }
 
     return upperLimit;
+}
+
+void servo::CalibrationTable::notifyServoParameters(size_t index)
+{
+    if (this->tableListeners[index] == nullptr)
+    {
+        ROS_WARN("Calibration table: can't notify listener by index '%d' as it is not available", index);
+    }
+
+    this->tableListeners[index]->setParameters(tableOutput[index]);
 }

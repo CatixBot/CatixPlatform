@@ -57,29 +57,9 @@ std::vector<std::shared_ptr<servo::IServo>> makeServos(
 
 ServoNode::ServoNode()
 {
-    this->calibrationTable = std::make_unique<servo::CalibrationTable>(nodeHandle, NUMBER_OF_CHANNELS);
-
-    this->signalingController = makeSignalingController();
-    this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
-    this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
-        1, &ServoNode::listenerSignalingChannelState, this);
-    ROS_INFO("Signaling channel: listener ready");
-
-    this->servos = makeServos(this->channels);
-    subscriberServo = nodeHandle.subscribe("Catix/Servo", 1, &ServoNode::listenerServoState, this);
-    ROS_INFO("Servo: listener ready");
-
-    subscriberCalibrationFirstPoint = nodeHandle.subscribe("Catix/CalibrationFirstPoint", 1, &ServoNode::listenerCalibrationFirstPoint, this);
-    ROS_INFO("Calibration table: first point listener ready");
-
-    subscriberCalibrationSecondPoint = nodeHandle.subscribe("Catix/CalibrationSecondPoint", 1, &ServoNode::listenerCalibrationSecondPoint, this);
-    ROS_INFO("Calibration table: second point listener ready");
-
-    subscriberCalibrationLowerLimit = nodeHandle.subscribe("Catix/CalibrationLowerLimit", 1, &ServoNode::listenerCalibrationLowerLimit, this);
-    ROS_INFO("Calibration table: lower limit listener ready");
-
-    subscriberCalibrationUpperLimit = nodeHandle.subscribe("Catix/CalibrationUpperLimit", 1, &ServoNode::listenerCalibrationUpperLimit, this);
-    ROS_INFO("Calibration table: upper limit listener ready");
+    buildSignalingChannelComponents();
+    buildServoComponents();
+    buildCalibrationTableComponents();
 }
 
 void ServoNode::listenerSignalingChannelState(const catix_messages::SignalingChannelStateConstPtr &signalingChannelState)
@@ -180,6 +160,46 @@ void ServoNode::listenerCalibrationUpperLimit(const catix_messages::CalibrationL
     }
         
     ROS_INFO("Servo %d: upper limit set to [%f%%]", servoIndex, signalStrengthPercentage);
+}
+
+void ServoNode::buildSignalingChannelComponents()
+{
+    this->signalingController = makeSignalingController();
+    this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
+    this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
+        1, &ServoNode::listenerSignalingChannelState, this);
+    ROS_INFO("Signaling channel: components built");
+}
+
+void ServoNode::buildServoComponents()
+{
+    this->servos = makeServos(this->channels);
+    subscriberServo = nodeHandle.subscribe("Catix/Servo", 1, &ServoNode::listenerServoState, this);
+    ROS_INFO("Servo: listener ready");
+}
+
+void ServoNode::buildCalibrationTableComponents()
+{
+    this->calibrationTable = std::make_unique<servo::CalibrationTable>(nodeHandle, NUMBER_OF_CHANNELS);
+    for (size_t i = 0; i < this->servos.size(); ++i)
+    {
+        this->calibrationTable->subscribeListener(i, this->servos[i]);
+    }
+
+    this->calibrationTable->updateListeners();
+    ROS_INFO("Calibration table: subscribers ready");
+
+    subscriberCalibrationFirstPoint = nodeHandle.subscribe("Catix/CalibrationFirstPoint", 1, &ServoNode::listenerCalibrationFirstPoint, this);
+    ROS_INFO("Calibration table: first point listener ready");
+
+    subscriberCalibrationSecondPoint = nodeHandle.subscribe("Catix/CalibrationSecondPoint", 1, &ServoNode::listenerCalibrationSecondPoint, this);
+    ROS_INFO("Calibration table: second point listener ready");
+
+    subscriberCalibrationLowerLimit = nodeHandle.subscribe("Catix/CalibrationLowerLimit", 1, &ServoNode::listenerCalibrationLowerLimit, this);
+    ROS_INFO("Calibration table: lower limit listener ready");
+
+    subscriberCalibrationUpperLimit = nodeHandle.subscribe("Catix/CalibrationUpperLimit", 1, &ServoNode::listenerCalibrationUpperLimit, this);
+    ROS_INFO("Calibration table: upper limit listener ready");
 }
 
 int main(int argc, char **argv)

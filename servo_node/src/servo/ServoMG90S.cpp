@@ -19,6 +19,8 @@ servo::ServoMG90S::ServoMG90S(uint8_t servoIndex, std::shared_ptr<servo::ISignal
 
 void servo::ServoMG90S::setParameters(servo::ServoParameters servoParameters)
 {
+    ROS_DEBUG("Servo %d: set parameters", this->servoIndex);
+
     this->servoParameters = servoParameters;
     fixIncorrectLimits();
 }

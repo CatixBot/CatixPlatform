@@ -1,6 +1,7 @@
 #pragma once
 
 #include "servo/ServoParameters.h"
+#include "servo/ServoInterface.h"
 
 #include <ros/ros.h>
 #include <vector>
@@ -20,8 +21,8 @@ namespace servo
         bool setLowerLimit(size_t index, double signalStrength);
         bool setUpperLimit(size_t index, double signalStrength);
 
-        bool isCalibrationRecordProvided();
-        servo::ServoParameters getCalibrationRecord();
+        void subscribeListener(size_t index, std::shared_ptr<servo::IServo> servo);
+        void updateListeners();
 
     private:
         struct CalibrationPoints
@@ -47,9 +48,12 @@ namespace servo
         void storeUpperLimit(std::string servoKey, double upperLimit);
         double loadUpperLimit(std::string servoKey);
 
+        void notifyServoParameters(size_t index);
+
     private:
         ros::NodeHandle &nodeHandle;
 
+        std::vector<std::shared_ptr<servo::IServo>> tableListeners;
         std::vector<servo::ServoParameters> tableOutput;
         std::vector<CalibrationPoints> tableInput;
     };

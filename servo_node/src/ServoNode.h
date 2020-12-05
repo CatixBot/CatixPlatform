@@ -28,6 +28,10 @@ class ServoNode
         void listenerCalibrationLowerLimit(const catix_messages::CalibrationLimitValueConstPtr &rCalibrationLimitValue);
         void listenerCalibrationUpperLimit(const catix_messages::CalibrationLimitValueConstPtr &rCalibrationLimitValue);
 
+        void buildSignalingChannelComponents();
+        void buildServoComponents();
+        void buildCalibrationTableComponents();
+
     private:
         std::unique_ptr<servo::CalibrationTable> calibrationTable;
 
