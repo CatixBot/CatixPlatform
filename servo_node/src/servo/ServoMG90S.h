@@ -20,6 +20,9 @@ namespace servo
         bool setAngle(double angleRadians) override;
 
     private:
+        void fixIncorrectLimits();
+
+    private:
         uint8_t servoIndex;
         servo::ServoParameters servoParameters;
         std::shared_ptr<servo::ISignalingChannel> signalingChannel;
