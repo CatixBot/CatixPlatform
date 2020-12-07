@@ -78,6 +78,17 @@ void ServoNode::listenerSignalingChannelState(const catix_messages::SignalingCha
     ROS_INFO("Signaling channel %d: [%f%%]", signalingChannelIndex, signalStrengthPercentage);
 }
 
+void ServoNode::listenerSignalingDrop(const std_msgs::EmptyConstPtr &dropEventMessage)
+{
+    if (this->signalingController == nullptr)
+    {
+        ROS_WARN("Signaling controller: can't drop signaling channels as controller is not available");
+        return;
+    }
+
+    this->signalingController->dropAllChannels();
+}
+
 void ServoNode::listenerServoState(const catix_messages::ServoStateConstPtr &servoState)
 {
     const size_t servoIndex = static_cast<size_t>(servoState->servo_index);
@@ -168,6 +179,8 @@ void ServoNode::buildSignalingChannelComponents()
     this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
     this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
         1, &ServoNode::listenerSignalingChannelState, this);
+    this->subscriberSignalingDrop = nodeHandle.subscribe("Catix/SignalingDrop", 
+        1, &ServoNode::listenerSignalingDrop, this);
     ROS_INFO("Signaling channel: components built");
 }
 

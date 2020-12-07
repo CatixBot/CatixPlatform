@@ -27,5 +27,10 @@ namespace servo
          * \note Method is blocking
          */
         virtual std::unique_ptr<ISignalingChannel> makeSignalingChannel(uint8_t channelNumber) = 0;
+
+        /*
+         * \brief Drop signal strength for each channel
+         */
+        virtual void dropAllChannels() = 0;
     };
 }

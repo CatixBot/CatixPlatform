@@ -6,7 +6,7 @@
 #include "servo/SignalingControllerInterface.h"
 
 #include <ros/ros.h>
-
+#include <std_msgs/Empty.h>
 #include <catix_messages/CalibrationLimitValue.h>
 #include <catix_messages/CalibrationPointValue.h>
 #include <catix_messages/ServoState.h>
@@ -23,6 +23,8 @@ class ServoNode
         void listenerServoState(const catix_messages::ServoStateConstPtr &rServoState);
         void listenerSignalingChannelState(const catix_messages::SignalingChannelStateConstPtr &signalingChannelState);
 
+        void listenerSignalingDrop(const std_msgs::EmptyConstPtr &dropEventMessage);
+
         void listenerCalibrationFirstPoint(const catix_messages::CalibrationPointValueConstPtr &rCalibrationAngleValue);
         void listenerCalibrationSecondPoint(const catix_messages::CalibrationPointValueConstPtr &rCalibrationAngleValue);
         void listenerCalibrationLowerLimit(const catix_messages::CalibrationLimitValueConstPtr &rCalibrationLimitValue);
@@ -36,8 +38,10 @@ class ServoNode
         std::unique_ptr<servo::CalibrationTable> calibrationTable;
 
         ros::NodeHandle nodeHandle;
+
         ros::Subscriber subscriberServo;
         ros::Subscriber subscriberSignalingChannel;
+        ros::Subscriber subscriberSignalingDrop;
 
         ros::Subscriber subscriberCalibrationFirstPoint;
         ros::Subscriber subscriberCalibrationSecondPoint;

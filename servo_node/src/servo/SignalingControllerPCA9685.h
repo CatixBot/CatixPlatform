@@ -14,6 +14,7 @@ namespace servo
 
     public:
         std::unique_ptr<servo::ISignalingChannel> makeSignalingChannel(uint8_t signalingChannelIndex) override;
+        void dropAllChannels() override;
 
     private:
         std::shared_ptr<PCA9685> pControllerPCA9685;

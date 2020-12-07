@@ -192,8 +192,12 @@ void servo::CalibrationTable::loadAllCalibrationPoints()
     for (size_t i = 0; i < this->tableInput.size(); ++i)
     {
         const auto servoKey = generateServoKey(i);
-        if (!this->nodeHandle.hasParam(servoKey))
+        if (!this->nodeHandle.hasParam(generateFirstPointPercentageKey(servoKey)) ||
+            !this->nodeHandle.hasParam(generateFirstPointAngleKey(servoKey)) ||
+            !this->nodeHandle.hasParam(generateSecondPointPercentageKey(servoKey)) ||
+            !this->nodeHandle.hasParam(generateSecondPointAngleKey(servoKey)))
         {
+            ROS_DEBUG("Calibration table: initialize parameter storage by default calibration points for '%s' key", servoKey.c_str());
             storeCalibrationPoints(servoKey, CalibrationPoints{});
         }
         else
@@ -235,8 +239,10 @@ void servo::CalibrationTable::loadAllLimits()
     for (size_t i = 0; i < this->tableOutput.size(); ++i)
     {
         const auto servoKey = generateServoKey(i);
-        if (!this->nodeHandle.hasParam(servoKey))
+        if (!this->nodeHandle.hasParam(generateLowerLimitKey(servoKey)) ||
+            !this->nodeHandle.hasParam(generateUpperLimitKey(servoKey)))
         {
+            ROS_DEBUG("Calibration table: initialize parameter storage by default limits for '%s' key", servoKey.c_str());
             storeLowerLimit(servoKey, SIGNAL_STRENGTH_MINIMUM_DEFAULT);
             storeUpperLimit(servoKey, SIGNAL_STRENGTH_MAXIMUM_DEFAULT);
         }
@@ -302,6 +308,7 @@ void servo::CalibrationTable::notifyServoParameters(size_t index)
     if (this->tableListeners[index] == nullptr)
     {
         ROS_WARN("Calibration table: can't notify listener by index '%d' as it is not available", index);
+        return;
     }
 
     this->tableListeners[index]->setParameters(tableOutput[index]);

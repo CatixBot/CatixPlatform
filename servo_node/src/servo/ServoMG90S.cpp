@@ -5,7 +5,7 @@
 //---------------------------------------------------------------
 
 const double MG90S_POSSIBLE_MINIMUM_LIMIT = 5.0; // Based on MG90S datasheet
-const double MG90S_POSSIBLE_MAXIMUM_LIMIT = 10.0; // Based on MG90S datasheet
+const double MG90S_POSSIBLE_MAXIMUM_LIMIT = 20.0; // Based on MG90S datasheet
 
 //---------------------------------------------------------------
 
