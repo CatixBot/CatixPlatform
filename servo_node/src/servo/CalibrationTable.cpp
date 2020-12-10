@@ -87,6 +87,7 @@ bool servo::CalibrationTable::setSecondPoint(size_t index, double signalStrength
 
     if (!this->calculateIndexCalibration(index, this->tableInput[index]))
     {
+        ROS_ERROR("Calibration table: can't calculate calibration at index %d", index);
         return false;
     }
 
@@ -180,7 +181,7 @@ bool servo::CalibrationTable::calculateIndexCalibration(size_t index, const Cali
     auto &servoParameters = this->tableOutput[index];
     servoParameters.signalStrengthToAngleSlope = (modifiedCalibrationPoints.secondPointSignalStrength - modifiedCalibrationPoints.firstPointSignalStrength) /
         (modifiedCalibrationPoints.secondPointRotateAngle - modifiedCalibrationPoints.firstPointRotateAngle);
-    servoParameters.signalStrengthOffset = modifiedCalibrationPoints.secondPointSignalStrength - 
+    servoParameters.signalStrengthOffset = modifiedCalibrationPoints.firstPointSignalStrength - 
         (servoParameters.signalStrengthToAngleSlope * modifiedCalibrationPoints.firstPointRotateAngle);
     return true;
 }
@@ -295,6 +296,7 @@ double servo::CalibrationTable::loadUpperLimit(std::string servoKey)
     {
         ROS_DEBUG("Calibration table: upper limit value %f%% loaded", upperLimit);
     }
+    else
     {
         ROS_ERROR("Calibration table: can't load upper limit by key '%s'. Return %f%% value by default", 
             servoKey.c_str(), upperLimit);

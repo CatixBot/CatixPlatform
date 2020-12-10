@@ -125,7 +125,7 @@ void ServoNode::listenerCalibrationFirstPoint(const catix_messages::CalibrationP
         return;
     }
 
-    ROS_INFO("Servo %d: first calibration point set to [%f%%; %fm/s]",  
+    ROS_INFO("Servo %d: first calibration point set to [%f%%; %frad]",  
         servoIndex, signalStrengthPercentage, rotateAngle);
 }
 
@@ -141,7 +141,7 @@ void ServoNode::listenerCalibrationSecondPoint(const catix_messages::Calibration
         return;
     }
 
-    ROS_INFO("Servo %d: second calibration point set to [%f%%; %fm/s]",  
+    ROS_INFO("Servo %d: second calibration point set to [%f%%; %frad]",  
         servoIndex, signalStrengthPercentage, rotateAngle);
 }
 
