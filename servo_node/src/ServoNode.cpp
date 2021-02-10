@@ -178,7 +178,7 @@ void ServoNode::buildSignalingChannelComponents()
     this->signalingController = makeSignalingController();
     this->channels = makeSignalingChannels(NUMBER_OF_CHANNELS, *this->signalingController);
     this->subscriberSignalingChannel = nodeHandle.subscribe("Catix/SignalingChannel", 
-        1, &ServoNode::listenerSignalingChannelState, this);
+        10, &ServoNode::listenerSignalingChannelState, this);
     this->subscriberSignalingDrop = nodeHandle.subscribe("Catix/SignalingDrop", 
         1, &ServoNode::listenerSignalingDrop, this);
     ROS_INFO("Signaling channel: components built");
@@ -187,7 +187,7 @@ void ServoNode::buildSignalingChannelComponents()
 void ServoNode::buildServoComponents()
 {
     this->servos = makeServos(this->channels);
-    subscriberServo = nodeHandle.subscribe("Catix/Servo", 1, &ServoNode::listenerServoState, this);
+    subscriberServo = nodeHandle.subscribe("Catix/Servo", 10, &ServoNode::listenerServoState, this);
     ROS_INFO("Servo: listener ready");
 }
 
